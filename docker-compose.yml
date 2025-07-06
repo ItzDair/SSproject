@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: mfa_admin
+      POSTGRES_PASSWORD: securepassword123
+      POSTGRES_DB: mfa_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - mfa-net
+    # Optional: Add health check (recommended)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mfa_admin -d mfa_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-server:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    ports:
+      - "6001:6000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - mfa-net
+    depends_on:
+      db:
+        condition: service_healthy  # Wait for DB to be ready
+  
+  notification-service:
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    ports:
+      - "6002:6000" 
+    env_file:
+      - .env
+    depends_on:
+      - auth-server
+    restart: unless-stopped
+    networks:
+      - mfa-net
+
+volumes:
+  postgres_data:
+
+networks:
+  mfa-net:
+    driver: bridge
