@@ -1,0 +1,32 @@
+# import os
+# from dotenv import load_dotenv
+# import mysql.connector
+# from mysql.connector import Error
+
+# # Load .env
+# load_dotenv()
+
+# # Get DB credentials
+# DB_HOST = os.getenv("DB_HOST")
+# DB_PORT = int(os.getenv("DB_PORT"))
+# DB_NAME = os.getenv("DB_NAME")
+# DB_USER = os.getenv("DB_USER")
+# DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+# try:
+#     connection = mysql.connector.connect(
+#         host=DB_HOST,
+#         port=DB_PORT,
+#         user=DB_USER,
+#         password=DB_PASSWORD,
+#         database=DB_NAME
+#     )
+#     if connection.is_connected():
+#         print("Connection successful!")
+# except Error as e:
+#     print("Connection failed:", e)
+# finally:
+#     if 'connection' in locals() and connection.is_connected():
+#         connection.close()
+import secrets
+print(secrets.token_hex(32))
