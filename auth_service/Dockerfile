@@ -1,15 +1,5 @@
-FROM python:3.11-slim
-
+FROM python:3.11
 WORKDIR /app
-
-COPY app/ .
-
-RUN pip install --no-cache-dir \
-    flask \
-    flask_sqlalchemy \
-    pymysql \
-    pyotp \
-    requests \
-    python-dotenv
-
-CMD ["python", "main.py"]
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python", "app/main.py"]

@@ -1,18 +1,13 @@
+# auth_service/app/main.py
 from flask import Flask
-from config import Config
-from database import db
-from routes import auth_bp
+import os
+from .routes import bp  # Import the blueprint
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(Config)
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")  # load from .env in production
 
-    db.init_app(app)
-    app.register_blueprint(auth_bp)
-
-    return app
-
-app = create_app()
+# Register blueprint
+app.register_blueprint(bp)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)

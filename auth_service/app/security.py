@@ -1,7 +1,16 @@
-from werkzeug.security import generate_password_hash, check_password_hash
+# auth_service/app/security.py
+import bcrypt
+import pyotp
 
 def hash_password(password: str) -> str:
-    return generate_password_hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-def verify_password(hash_value: str, password: str) -> bool:
-    return check_password_hash(hash_value, password)
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
+def generate_mfa_secret() -> str:
+    return pyotp.random_base32()
+
+def generate_otp(secret_key: str) -> str:
+    totp = pyotp.TOTP(secret_key)
+    return totp.now()

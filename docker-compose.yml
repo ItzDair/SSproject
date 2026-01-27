@@ -1,21 +1,20 @@
+version: "3.9"
+
 services:
+  auth:
+    build: ./auth_service
+    ports: ["5555:5555"]
+    env_file: .env
+    depends_on: [db]
 
+  notify:
+    build: ./notification-service
+    ports: ["6666:6666"]
 
-
-  auth-service:
-    build:
-      context: ./auth_service
-      dockerfile: Dockerfile
-    ports:
-      - "5002:5000"  # host 5002 -> container 5000
-    env_file:
-      - .env
-    depends_on:
-      - notification-service
-
-
-  notification-service:
-    build:
-      context: ./auth_service/notification-service
-    ports:
-      - "5001:5001"
+  db: 
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: mfa
+      MYSQL_USER: mfa_user
+      MYSQL_PASSWORD: mfa_pass
+      MYSQL_ROOT_PASSWORD: root

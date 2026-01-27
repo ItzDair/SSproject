@@ -1,70 +1,131 @@
-from flask import Blueprint, request, jsonify, render_template, session
-from database import db
-from models import User, MFAMethod
-from security import verify_password
-from mfa import verify_totp, send_sms, send_email
+# auth_service/app/routes.py
 import random
+from flask import Blueprint, render_template, request, redirect, session, jsonify
+from telegram import Bot
+from .models import get_user_by_username
+from .database import get_db
+from .security import hash_password, verify_password
 
-auth_bp = Blueprint("auth", __name__)
+bp = Blueprint("routes", __name__)
 
-@auth_bp.route("/login", methods=["GET", "POST"])
+# Telegram bot token (replace with your bot token)
+TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"
+
+# Helper function to send OTP via Telegram
+def send_telegram_otp(phone_number, otp):
+    bot = Bot(token=TELEGRAM_BOT_TOKEN)
+    chat_id = phone_number  # for testing, map phone_number to chat_id
+    bot.send_message(chat_id=chat_id, text=f"Your OTP code is: {otp}")
+
+# Login page (GET)
+@bp.route("/", methods=["GET"])
+def login_page():
+    return render_template("face/login.html")
+
+# Login action (POST)
+@bp.route("/login", methods=["POST"])
 def login():
-    if request.method == "GET":
-        return render_template("face/login.html")
+    username = request.form.get("username")
+    password = request.form.get("password")
+    user = get_user_by_username(username)
 
-    username = request.form["username"]
-    password = request.form["password"]
+    if not user:
+        return "User not found", 404
 
-    user = User.query.filter_by(username=username).first()
-    if not user or not verify_password(user.password_hash, password):
+    if not verify_password(password, user["password_hash"]):
         return "Invalid credentials", 401
 
-    if user.mfa_enabled:
-        session["mfa_user"] = user.id
-        return render_template("face/mfa_verify.html")
+    session["tmp_user_id"] = user["id"]
 
-    session["user"] = user.id
+    # If MFA is enabled for the user, redirect to MFA page
+    if user.get("mfa_enabled"):
+        return redirect("/mfa")
+
+    # Otherwise, login directly
+    session["user_id"] = user["id"]
+    return redirect("/dashboard")
+
+# MFA page (GET/POST)
+@bp.route("/mfa", methods=["GET", "POST"])
+def mfa():
+    user_id = session.get("tmp_user_id")
+    if not user_id:
+        return redirect("/")
+
+    # Fetch user from DB
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not user or not user.get("mfa_enabled"):
+        # No MFA, proceed to dashboard
+        session["user_id"] = user_id
+        return redirect("/dashboard")
+
+    if request.method == "GET":
+        # Generate OTP and store in session
+        otp = str(random.randint(100000, 999999))
+        session["telegram_otp"] = otp
+        send_telegram_otp(user["phone_number"], otp)
+        return render_template("face/mfa_verify.html")  # page with OTP input
+
+    if request.method == "POST":
+        entered_otp = request.form.get("code")
+        if entered_otp == session.get("telegram_otp"):
+            session.pop("tmp_user_id")
+            session["user_id"] = user_id
+            session.pop("telegram_otp")
+            return redirect("/dashboard")
+        return "Invalid OTP", 403
+
+# Registration page (GET/POST)
+@bp.route("/register", methods=["GET", "POST"])
+def register_user_page():
+    if request.method == "POST":
+        # Handle both JSON API or HTML form
+        if request.is_json:
+            data = request.get_json()
+            username = data.get("username")
+            email = data.get("email")
+            phone_number = data.get("phone_number")
+            password = data.get("password")
+        else:
+            username = request.form.get("username")
+            email = request.form.get("email")
+            phone_number = request.form.get("phone_number")
+            password = request.form.get("password")
+
+        if not all([username, email, password, phone_number]):
+            return jsonify({"error": "Missing fields"}), 400
+
+        hashed_password = hash_password(password)
+
+        conn = get_db()
+        cursor = conn.cursor()
+        # Automatically enable MFA for every new user
+        cursor.execute(
+            "INSERT INTO users (username, email, phone_number, password_hash, mfa_enabled) VALUES (%s,%s,%s,%s,TRUE)",
+            (username, email, phone_number, hashed_password)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # Return JSON for API, redirect for HTML form
+        if request.is_json:
+            return jsonify({"message": "User registered successfully"}), 201
+        else:
+            return redirect("/")
+
+    # GET request → show registration page
+    return render_template("face/register.html")
+
+# Dashboard page (protected)
+@bp.route("/dashboard")
+def dashboard():
+    if "user_id" not in session:
+        return redirect("/")
     return render_template("face/dashboard.html")
-
-@auth_bp.route("/mfa/verify", methods=["POST"])
-def mfa_verify():
-    user_id = session.get("mfa_user")
-    code = request.form["code"]
-
-    methods = MFAMethod.query.filter_by(user_id=user_id, enabled=True).all()
-
-    for method in methods:
-        if method.method_type == "TOTP":
-            if verify_totp(method.secret_key, code):
-                session["user"] = user_id
-                return render_template("face/dashboard.html")
-
-        elif method.method_type == "SMS":
-            if session.get("sms_code") == code:
-                session["user"] = user_id
-                return render_template("face/dashboard.html")
-
-        elif method.method_type == "EMAIL":
-            if session.get("email_code") == code:
-                session["user"] = user_id
-                return render_template("face/dashboard.html")
-
-    return "Invalid MFA code", 401
-
-@auth_bp.route("/mfa/send", methods=["POST"])
-def send_mfa():
-    user_id = session.get("mfa_user")
-    methods = MFAMethod.query.filter_by(user_id=user_id, enabled=True).all()
-
-    code = str(random.randint(100000, 999999))
-
-    for method in methods:
-        if method.method_type == "SMS":
-            session["sms_code"] = code
-            send_sms(method.phone_number, code)
-
-        if method.method_type == "EMAIL":
-            session["email_code"] = code
-            send_email(method.email, code)
-
-    return jsonify({"status": "sent"})
