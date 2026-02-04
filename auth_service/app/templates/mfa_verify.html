@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MFA Verification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="card mfa">
+        <h2>Enter OTP</h2>
+        <p>An OTP has been sent to your email. Please check your inbox and spam folder.</p>
+        <form method="POST">
+            <input name="code" placeholder="Enter OTP" required>
+            <button type="submit" class="mfa">Verify</button>
+        </form>
+        <a href="/">Back to login</a>
+    </div>
+</body>
+</html>

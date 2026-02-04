@@ -1,7 +1,6 @@
-# auth_service/app/models.py
 from .database import get_db
 
-# Simple helper to get user by username
+# Get user by username
 def get_user_by_username(username: str):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -11,7 +10,19 @@ def get_user_by_username(username: str):
     conn.close()
     return user
 
-# Get enabled MFA method
+# Update OTP and expiry
+def update_user_otp(user_id, otp, expiry):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET otp=%s, otp_expiry=%s WHERE id=%s",
+        (otp, expiry, user_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# Get enabled MFA method (optional, if you expand later)
 def get_enabled_mfa_method(user_id: int):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)

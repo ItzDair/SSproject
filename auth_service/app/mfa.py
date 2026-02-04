@@ -1,21 +1,28 @@
-import random
-from telegram import Bot
-from flask import session, request, redirect
-from telegram import Bot
+import os
+from datetime import datetime
+from sib_api_v3_sdk import Configuration, ApiClient
+from sib_api_v3_sdk.api.transactional_emails_api import TransactionalEmailsApi
+from sib_api_v3_sdk.models import SendSmtpEmail
 
-TELEGRAM_BOT_TOKEN = "8396245929:AAFyCnMS_g8TlBo-cW7jyvVMDTMqWnfnIg0"
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 
-def send_telegram_otp(phone_number, otp):
-    bot = Bot(token=TELEGRAM_BOT_TOKEN)
-    
-    # Map phone_number to Telegram chat_id for testing
-    phone_to_chat = {
-        "+1234567890": 123456789,  # replace with your Telegram chat ID
-        # Add other users here
-    }
-    
-    chat_id = phone_to_chat.get(phone_number)
-    if chat_id:
-        bot.send_message(chat_id=chat_id, text=f"Your OTP code is: {otp}")
-    else:
-        print(f"No chat_id found for {phone_number}")
+def send_otp_email(to_email, otp):
+    configuration = Configuration()
+    configuration.api_key['api-key'] = BREVO_API_KEY
+    api_instance = TransactionalEmailsApi(ApiClient(configuration))
+
+    send_smtp_email = SendSmtpEmail(
+    to=[{"email": to_email}],
+    sender={
+        "email": "otpnoreplyss@gmail.com",
+        "name": "Dair Sultanov"
+    },
+    subject="Your One-Time Password",
+    html_content=f"<p>Your OTP is <b>{otp}</b>. It expires in 5 minutes.</p>"
+)
+
+
+    try:
+        api_instance.send_transac_email(send_smtp_email)
+    except Exception as e:
+        print("Error sending email:", e)

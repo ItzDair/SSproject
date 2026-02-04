@@ -1,0 +1,74 @@
+/* General body styles */
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+}
+
+/* Card container */
+.card {
+    background: #020617;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Form inputs and buttons */
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
+    box-sizing: border-box;
+}
+
+button {
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Button colors */
+button.login {
+    background: #2563eb;
+    color: white;
+}
+
+button.register, button.mfa {
+    background: #16a34a;
+    color: white;
+}
+
+button.logout {
+    background: #dc2626;
+    margin-top: 20px;
+}
+
+button.logout:hover {
+    background: #b91c1c;
+}
+
+/* Links */
+a {
+    color: #60a5fa;
+    display: block;
+    margin-top: 15px;
+    text-align: center;
+}
+
+/* Specific card widths */
+.card.login, .card.mfa {
+    width: 320px;
+}
+
+.card.register {
+    width: 350px;
+}
+
+.card.dashboard {
+    width: 400px;
+}
