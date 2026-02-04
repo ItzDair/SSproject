@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Link Telegram | Auth Service</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="card link-telegram">
+        <h2>Link Your Telegram Account</h2>
+        <p>Click the link below to start the bot and link your account. An OTP will be sent automatically:</p>
+
+        <a href="https://t.me/noReplyOTPbot?start={{ token }}" target="_blank" class="telegram-link">
+            Start Telegram Bot
+        </a>
+
+        <p>After clicking the link, go to the <a href="/mfa">MFA page</a> to enter your OTP and complete login.</p>
+
+        <p><a href="/">Back to login</a></p>
+    </div>
+</body>
+</html>

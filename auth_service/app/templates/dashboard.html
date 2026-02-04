@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <title>Dashboard | Auth Service</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 <body>
     <div class="card dashboard">
-        <h1>Welcome to Your Dashboard!</h1>
-        <p>You have successfully logged in and completed MFA verification.</p>
+        <h1>Login Successful</h1>
+        <p>You are authenticated and MFA verified.</p>
+
         <form action="/logout" method="POST">
             <button type="submit" class="logout">Logout</button>
         </form>

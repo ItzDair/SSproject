@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="card dashboard">
+    <h1>Login Successful</h1>
+    <p>You are authenticated and MFA verified.</p>
+
+    <a href="/dashboard">Go to dashboard</a>
+
+    <form action="/logout" method="POST">
+        <button class="logout">Logout</button>
+    </form>
+</div>
+</body>
+</html>

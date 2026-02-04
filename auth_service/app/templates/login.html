@@ -11,9 +11,21 @@
         <form method="POST" action="/login">
             <input name="username" placeholder="Username" required>
             <input name="password" type="password" placeholder="Password" required>
+
+            <label for="mfa_channel">Choose MFA method:</label>
+            <select name="mfa_channel" id="mfa_channel" required>
+                <option value="email">Email OTP</option>
+                <option value="telegram">Telegram OTP</option>
+            </select>
+
             <button type="submit" class="login">Login</button>
         </form>
-        <a href="/register">Don't have an account? Register here</a>
+
+        <p>Don't have an account? <a href="/register">Register here</a></p>
+
+        <p style="margin-top: 10px; font-size: 0.9em;">
+            If you choose Telegram OTP and haven’t started the bot yet, you’ll be redirected to link your Telegram account.
+        </p>
     </div>
 </body>
 </html>
