@@ -28,3 +28,6 @@ Thumbs.db
 # Database
 *.sqlite3
 *.db
+.env
+.env.local
+.env.*
